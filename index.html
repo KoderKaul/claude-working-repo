@@ -1,0 +1,829 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marvel Multiverse Codex</title>
+<meta name="description" content="An interactive archive of Marvel heroes, villains, their alliances, timelines, and parallel universes.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600;700&family=Barlow:ital,wght@0,400;0,500;0,600;1,400&family=Space+Mono:wght@400;700&display=swap">
+
+<style>
+:root{
+  --void:#0b0b14; --panel:#15151f; --panel-2:#1e1e2b; --line:#2c2c3d;
+  --ink:#f6f3ec; --muted:#a7a3b8; --dim:#726f85;
+  --red:#e62429; --red-deep:#b31217; --gold:#f0b429; --magenta:#d6409f;
+  --blue:#3b7fe0; --cyan:#38c6d9; --green:#4fbf67;
+  --dot:rgba(255,255,255,.05);
+  --shadow:0 18px 50px -20px rgba(0,0,0,.8);
+  --grid-max:1180px;
+}
+:root:not([data-theme="dark"]){
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --void:#efe9dc; --panel:#fbf7ef; --panel-2:#f3ecdd; --line:#ddd2bd;
+    --ink:#171420; --muted:#5b5568; --dim:#8a8397;
+    --dot:rgba(20,10,30,.06);
+    --shadow:0 18px 40px -22px rgba(60,40,20,.45);
+  }
+}
+:root[data-theme="light"]{
+  --void:#efe9dc; --panel:#fbf7ef; --panel-2:#f3ecdd; --line:#ddd2bd;
+  --ink:#171420; --muted:#5b5568; --dim:#8a8397;
+  --dot:rgba(20,10,30,.06);
+  --shadow:0 18px 40px -22px rgba(60,40,20,.45);
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--void); color:var(--ink);
+  font-family:"Barlow", system-ui, sans-serif; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(var(--dot) 1.1px, transparent 1.2px);
+  background-size:10px 10px;
+  overflow-x:hidden;
+}
+h1,h2,h3{margin:0; text-wrap:balance}
+a{color:inherit}
+button{font-family:inherit; cursor:pointer}
+.wrap{max-width:var(--grid-max); margin:0 auto; padding:0 20px}
+.eyebrow{font-family:"Oswald",sans-serif; text-transform:uppercase; letter-spacing:.28em; font-size:.72rem; color:var(--gold); font-weight:600}
+.mono{font-family:"Space Mono",monospace}
+
+/* ---------- HERO ---------- */
+.hero{position:relative; overflow:hidden; padding:64px 0 40px; border-bottom:1px solid var(--line)}
+#web{position:absolute; inset:0; width:100%; height:100%; opacity:.55}
+.hero-inner{position:relative; z-index:2; max-width:var(--grid-max); margin:0 auto; padding:0 20px}
+.hero h1{
+  font-family:"Anton",sans-serif; font-weight:400; line-height:.9;
+  font-size:clamp(2.8rem,9vw,6.4rem); letter-spacing:.01em; text-transform:uppercase;
+  margin:14px 0 0;
+}
+.hero h1 .redword{
+  color:var(--red);
+  text-shadow:3px 3px 0 rgba(0,0,0,.35);
+  -webkit-text-stroke:1px rgba(255,255,255,.06);
+}
+.hero h1 .goldword{color:var(--gold)}
+.hero p.lede{max-width:56ch; color:var(--muted); font-size:1.06rem; margin:16px 0 0}
+.hero-stats{display:flex; flex-wrap:wrap; gap:26px; margin-top:26px}
+.hstat b{font-family:"Anton",sans-serif; font-size:1.9rem; color:var(--ink); display:block; line-height:1}
+.hstat span{font-family:"Oswald",sans-serif; text-transform:uppercase; letter-spacing:.14em; font-size:.68rem; color:var(--dim)}
+.hero-cta{display:flex; gap:12px; margin-top:26px; flex-wrap:wrap}
+
+.btn{
+  border:none; border-radius:8px; padding:12px 20px; font-family:"Oswald",sans-serif;
+  text-transform:uppercase; letter-spacing:.1em; font-weight:600; font-size:.82rem;
+  background:var(--red); color:#fff; transition:transform .12s ease, filter .15s ease;
+}
+.btn:hover{transform:translateY(-2px); filter:brightness(1.08)}
+.btn.ghost{background:transparent; color:var(--ink); border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--gold); color:var(--gold)}
+
+.theme-toggle{
+  position:absolute; top:18px; right:20px; z-index:5;
+  background:var(--panel); border:1px solid var(--line); color:var(--ink);
+  width:42px; height:42px; border-radius:50%; font-size:1.1rem; display:grid; place-items:center;
+}
+.theme-toggle:hover{border-color:var(--gold)}
+
+/* ---------- CONTROLS ---------- */
+.controls{position:sticky; top:0; z-index:40; background:color-mix(in srgb, var(--void) 88%, transparent); backdrop-filter:blur(10px); border-bottom:1px solid var(--line)}
+.controls-inner{max-width:var(--grid-max); margin:0 auto; padding:14px 20px; display:flex; gap:14px; align-items:center; flex-wrap:wrap}
+.search{flex:1; min-width:200px; position:relative}
+.search input{
+  width:100%; background:var(--panel); border:1px solid var(--line); color:var(--ink);
+  border-radius:10px; padding:11px 14px 11px 40px; font-family:"Barlow",sans-serif; font-size:.98rem;
+}
+.search input:focus{outline:2px solid var(--gold); outline-offset:1px; border-color:transparent}
+.search svg{position:absolute; left:13px; top:50%; transform:translateY(-50%); opacity:.5}
+.chips{display:flex; gap:7px; flex-wrap:wrap}
+.chip{
+  background:var(--panel); border:1px solid var(--line); color:var(--muted);
+  border-radius:100px; padding:7px 14px; font-family:"Oswald",sans-serif; font-size:.74rem;
+  text-transform:uppercase; letter-spacing:.08em; transition:all .13s ease;
+}
+.chip:hover{color:var(--ink); border-color:var(--dim)}
+.chip[aria-pressed="true"]{background:var(--ink); color:var(--void); border-color:var(--ink)}
+.chip[data-team][aria-pressed="true"]{background:var(--red); border-color:var(--red); color:#fff}
+
+/* ---------- SECTION HEADS ---------- */
+section{padding:56px 0}
+.sec-head{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:26px; flex-wrap:wrap}
+.sec-head h2{font-family:"Anton",sans-serif; font-weight:400; text-transform:uppercase; font-size:clamp(1.7rem,4vw,2.7rem); line-height:1}
+.sec-head p{color:var(--muted); max-width:46ch; margin:6px 0 0}
+.count{font-family:"Space Mono",monospace; color:var(--dim); font-size:.8rem}
+
+/* ---------- ROSTER GRID ---------- */
+.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(178px,1fr)); gap:16px}
+.card{
+  position:relative; background:var(--panel); border:1px solid var(--line); border-radius:14px;
+  overflow:hidden; cursor:pointer; transition:transform .14s ease, border-color .14s ease, box-shadow .14s ease;
+  display:flex; flex-direction:column; min-height:210px;
+}
+.card:hover{transform:translateY(-4px); border-color:var(--gold); box-shadow:var(--shadow)}
+.card:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+.card .emblem{
+  height:118px; display:grid; place-items:center; font-size:3.2rem; position:relative;
+  background:radial-gradient(circle at 50% 35%, var(--c1,#333) 0%, transparent 70%), var(--panel-2);
+}
+.card .emblem::after{content:""; position:absolute; inset:0; background-image:radial-gradient(rgba(0,0,0,.16) 1px, transparent 1.4px); background-size:7px 7px; mix-blend-mode:multiply}
+.card .body{padding:11px 13px 14px; flex:1; display:flex; flex-direction:column; gap:3px}
+.card .name{font-family:"Oswald",sans-serif; font-weight:700; text-transform:uppercase; font-size:1.02rem; line-height:1.05; letter-spacing:.01em}
+.card .alias{font-size:.8rem; color:var(--muted); font-style:italic}
+.card .tags{margin-top:auto; display:flex; gap:5px; flex-wrap:wrap; padding-top:8px}
+.tag{font-family:"Oswald",sans-serif; font-size:.6rem; text-transform:uppercase; letter-spacing:.08em; padding:3px 7px; border-radius:5px; color:var(--void); font-weight:600}
+.card .align{position:absolute; top:9px; right:9px; width:9px; height:9px; border-radius:50%; box-shadow:0 0 0 3px color-mix(in srgb, var(--panel) 70%, transparent)}
+.no-results{grid-column:1/-1; text-align:center; color:var(--dim); padding:40px; font-family:"Oswald",sans-serif; text-transform:uppercase; letter-spacing:.1em}
+
+/* ---------- TIMELINE ---------- */
+.timeline{display:flex; gap:0; overflow-x:auto; padding:8px 0 20px; scroll-snap-type:x mandatory}
+.phase{scroll-snap-align:start; min-width:240px; flex:1; padding:0 22px; border-left:2px solid var(--line); position:relative}
+.phase:first-child{padding-left:4px; border-left:none}
+.phase .dot{position:absolute; left:-8px; top:2px; width:14px; height:14px; border-radius:50%; background:var(--red); box-shadow:0 0 0 4px var(--void)}
+.phase .yr{font-family:"Space Mono",monospace; color:var(--gold); font-size:.8rem}
+.phase h3{font-family:"Oswald",sans-serif; text-transform:uppercase; font-size:1.15rem; margin:4px 0 6px}
+.phase p{color:var(--muted); font-size:.9rem; margin:0 0 10px}
+.phase ul{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:4px}
+.phase li{font-size:.82rem; color:var(--dim); font-family:"Barlow",sans-serif}
+.phase li b{color:var(--ink); font-weight:600}
+
+/* ---------- UNIVERSES ---------- */
+.uni-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:16px}
+.uni{
+  background:linear-gradient(160deg, var(--panel), var(--panel-2)); border:1px solid var(--line);
+  border-radius:16px; padding:22px; position:relative; overflow:hidden;
+}
+.uni::before{content:""; position:absolute; right:-40px; top:-40px; width:150px; height:150px; border-radius:50%; background:var(--uc,var(--blue)); opacity:.14; filter:blur(6px)}
+.uni .code{font-family:"Space Mono",monospace; color:var(--uc,var(--blue)); font-size:.82rem; font-weight:700}
+.uni h3{font-family:"Anton",sans-serif; font-weight:400; text-transform:uppercase; font-size:1.5rem; margin:6px 0}
+.uni p{color:var(--muted); font-size:.9rem; margin:0 0 12px}
+.uni .who{display:flex; gap:6px; flex-wrap:wrap}
+.uni .who span{font-size:.72rem; background:color-mix(in srgb, var(--uc,var(--blue)) 18%, transparent); color:var(--ink); padding:3px 9px; border-radius:100px; font-family:"Oswald",sans-serif; text-transform:uppercase; letter-spacing:.05em}
+
+/* ---------- MODAL ---------- */
+.modal-back{position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.72); backdrop-filter:blur(4px); display:none; align-items:flex-start; justify-content:center; padding:5vh 16px; overflow-y:auto}
+.modal-back.open{display:flex}
+.modal{
+  width:min(720px,100%); background:var(--panel); border:1px solid var(--line); border-radius:18px;
+  overflow:hidden; box-shadow:0 30px 80px -20px rgba(0,0,0,.9); animation:pop .22s cubic-bezier(.2,.9,.3,1.2);
+}
+@keyframes pop{from{transform:translateY(18px) scale(.97); opacity:0}to{transform:none; opacity:1}}
+.m-hero{position:relative; padding:26px 26px 20px; overflow:hidden}
+.m-hero::before{content:""; position:absolute; inset:0; background:radial-gradient(circle at 20% 10%, var(--c1,#444), transparent 60%); opacity:.5}
+.m-hero::after{content:""; position:absolute; inset:0; background-image:radial-gradient(rgba(0,0,0,.18) 1px,transparent 1.4px); background-size:8px 8px}
+.m-hero-row{position:relative; z-index:2; display:flex; gap:18px; align-items:center}
+.m-emblem{font-size:3.6rem; width:84px; height:84px; border-radius:16px; display:grid; place-items:center; background:color-mix(in srgb,var(--void) 55%, transparent); border:1px solid var(--line); flex-shrink:0}
+.m-title h2{font-family:"Anton",sans-serif; font-weight:400; text-transform:uppercase; font-size:1.9rem; line-height:.95}
+.m-title .alias{color:var(--gold); font-family:"Oswald",sans-serif; text-transform:uppercase; letter-spacing:.06em; font-size:.9rem}
+.m-title .meta{color:var(--muted); font-size:.85rem; margin-top:5px}
+.m-close{position:absolute; top:16px; right:16px; z-index:3; background:rgba(0,0,0,.35); border:1px solid var(--line); color:#fff; width:34px; height:34px; border-radius:50%; font-size:1rem}
+.m-close:hover{background:var(--red); border-color:var(--red)}
+.m-body{padding:22px 26px 28px; display:flex; flex-direction:column; gap:22px}
+.m-bio{color:var(--muted); font-size:.98rem; margin:0}
+.m-grid2{display:grid; grid-template-columns:1fr 1fr; gap:22px}
+@media (max-width:560px){.m-grid2{grid-template-columns:1fr}}
+.block h4{font-family:"Oswald",sans-serif; text-transform:uppercase; letter-spacing:.12em; font-size:.72rem; color:var(--dim); margin:0 0 10px}
+.fact{display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px dashed var(--line); font-size:.88rem}
+.fact span:first-child{color:var(--dim)}
+.fact span:last-child{text-align:right; font-weight:500}
+.powbar{margin-bottom:9px}
+.powbar .lab{display:flex; justify-content:space-between; font-family:"Oswald",sans-serif; text-transform:uppercase; font-size:.68rem; letter-spacing:.06em; color:var(--muted); margin-bottom:3px}
+.powbar .track{height:7px; background:var(--panel-2); border-radius:4px; overflow:hidden}
+.powbar .fill{height:100%; border-radius:4px; background:linear-gradient(90deg,var(--gold),var(--red)); transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.rel{display:flex; flex-wrap:wrap; gap:7px}
+.rel button{
+  background:var(--panel-2); border:1px solid var(--line); color:var(--ink); border-radius:100px;
+  padding:6px 12px 6px 8px; font-family:"Oswald",sans-serif; text-transform:uppercase; font-size:.7rem;
+  letter-spacing:.04em; display:inline-flex; align-items:center; gap:6px; transition:all .12s ease;
+}
+.rel button:hover{border-color:var(--gold); transform:translateY(-1px)}
+.rel button .em{font-size:1rem}
+.rel.enemy button:hover{border-color:var(--red)}
+.rel-empty{color:var(--dim); font-size:.82rem; font-style:italic}
+.pills{display:flex; gap:7px; flex-wrap:wrap; position:relative; z-index:2; margin-top:14px}
+.pills .tag{cursor:default}
+
+/* ---------- FOOTER ---------- */
+footer{border-top:1px solid var(--line); padding:34px 0 60px; color:var(--dim); font-size:.85rem}
+footer .wrap{display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; align-items:center}
+footer b{color:var(--muted); font-family:"Oswald",sans-serif; text-transform:uppercase; letter-spacing:.1em; font-weight:600}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important; scroll-behavior:auto}}
+</style>
+
+<button class="theme-toggle" id="themeBtn" title="Toggle light / dark" aria-label="Toggle theme">◐</button>
+
+<!-- HERO -->
+<header class="hero">
+  <canvas id="web" aria-hidden="true"></canvas>
+  <div class="hero-inner">
+    <span class="eyebrow">An interactive field guide to the multiverse</span>
+    <h1>Marvel <span class="redword">Multiverse</span> <span class="goldword">Codex</span></h1>
+    <p class="lede">Every hero, every villain, every fractured timeline — mapped. Browse the roster, trace who fights beside whom, and jump across parallel Earths. Tap any character to open their dossier.</p>
+    <div class="hero-stats" id="heroStats"></div>
+    <div class="hero-cta">
+      <button class="btn" onclick="document.getElementById('roster').scrollIntoView()">Explore the Roster</button>
+      <button class="btn ghost" onclick="document.getElementById('timeline').scrollIntoView()">Saga Timeline</button>
+    </div>
+  </div>
+</header>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <div class="controls-inner">
+    <div class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input id="search" type="search" placeholder="Search heroes, villains, powers…" autocomplete="off">
+    </div>
+    <div class="chips" id="teamChips"></div>
+    <div class="chips" id="uniChips"></div>
+  </div>
+</div>
+
+<!-- ROSTER -->
+<section id="roster">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">The Roster</span>
+        <h2>Characters</h2>
+        <p>Filter by team or home universe. Each card opens a full dossier with a power grid and its web of allies and rivals.</p>
+      </div>
+      <span class="count" id="rosterCount"></span>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+</section>
+
+<!-- TIMELINE -->
+<section id="timeline" style="background:var(--panel)">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">Sagas &amp; Phases</span>
+        <h2>The Timeline</h2>
+        <p>From a billionaire in a cave to the collapse of the multiverse — the saga in movement, phase by phase.</p>
+      </div>
+    </div>
+    <div class="timeline" id="phases"></div>
+  </div>
+</section>
+
+<!-- UNIVERSES -->
+<section id="universes">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <span class="eyebrow">Parallel Earths</span>
+        <h2>The Universes</h2>
+        <p>The same faces, different fates. A handful of the realities stitched together by the Multiverse.</p>
+      </div>
+    </div>
+    <div class="uni-grid" id="unis"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <b>Marvel Multiverse Codex</b>
+    <span>A fan-made interactive archive · character data drawn from Marvel comics &amp; film canon · not affiliated with Marvel.</span>
+  </div>
+</footer>
+
+<!-- MODAL -->
+<div class="modal-back" id="modal" role="dialog" aria-modal="true" aria-labelledby="mName">
+  <div class="modal" id="modalCard"></div>
+</div>
+
+<script>
+/* ============ DATA ============ */
+const TEAMS = {
+  avengers:{name:"Avengers", color:"#e62429"},
+  xmen:{name:"X-Men", color:"#f0b429"},
+  guardians:{name:"Guardians", color:"#4fbf67"},
+  ff:{name:"Fantastic Four", color:"#3b7fe0"},
+  defenders:{name:"Street-Level", color:"#38c6d9"},
+  cosmic:{name:"Cosmic", color:"#d6409f"},
+  villains:{name:"Villains", color:"#8a3ffc"}
+};
+const UNIS = {
+  "616":{code:"Earth-616", name:"The Prime Reality", color:"#e62429",
+    desc:"The main comic-book continuity where the vast majority of Marvel history unfolds — the definitive timeline.",
+    who:["Spider-Man","X-Men","Avengers"]},
+  "199999":{code:"Earth-199999", name:"The MCU", color:"#f0b429",
+    desc:"The Marvel Cinematic Universe. A distinct reality where the Infinity Saga plays out on screen.",
+    who:["Iron Man","Thanos","Captain America"]},
+  "1610":{code:"Earth-1610", name:"The Ultimate Universe", color:"#3b7fe0",
+    desc:"A modernized reboot begun in 2000 — grittier, younger heroes. Home of Miles Morales' debut.",
+    who:["Miles Morales","The Maker"]},
+  "65":{code:"Earth-65", name:"Spider-Gwen's World", color:"#d6409f",
+    desc:"A reality where Gwen Stacy was bitten by the radioactive spider instead of Peter Parker.",
+    who:["Spider-Gwen"]},
+  "928":{code:"Earth-928", name:"Marvel 2099", color:"#38c6d9",
+    desc:"A cyberpunk future a century ahead, where megacorporations rule and new heroes take up old mantles.",
+    who:["Spider-Man 2099"]},
+  "TVA":{code:"Void / TVA", name:"Beyond Time", color:"#8a3ffc",
+    desc:"The Time Variance Authority polices the Sacred Timeline; cosmic entities exist outside reality itself.",
+    who:["Loki","Kang","Galactus"]}
+};
+
+// power grid order: Intelligence, Strength, Speed, Durability, Energy, Fighting  (1-7 official-style scale)
+const P = ["Intelligence","Strength","Speed","Durability","Energy","Fighting"];
+
+const C = [
+  {id:"spiderman", name:"Spider-Man", alias:"Peter Parker", emoji:"🕷️", c1:"#c8102e", align:"hero",
+   teams:["avengers","defenders"], uni:"616", first:"Amazing Fantasy #15 (1962)", origin:"Radioactive spider bite",
+   affil:"Avengers · Daily Bugle", bio:"A brilliant, wisecracking teenager who gains spider-powers and learns that with great power comes great responsibility. The friendly neighborhood hero of New York.",
+   powers:["Wall-crawling","Spider-sense","Superhuman agility","Web-shooters"],
+   grid:[6,4,3,3,1,4], allies:["ironman","daredevil","venom_ally"], enemies:["greengoblin","venom","doctoroctopus"]},
+
+  {id:"ironman", name:"Iron Man", alias:"Tony Stark", emoji:"🤖", c1:"#e0202a", align:"hero",
+   teams:["avengers"], uni:"616", first:"Tales of Suspense #39 (1963)", origin:"Built armor to escape captivity",
+   affil:"Avengers · Stark Industries", bio:"A genius billionaire inventor who forges a suit of powered armor and becomes the invincible Iron Man — the futurist heart of the Avengers.",
+   powers:["Powered armor","Repulsor beams","Flight","Super-genius intellect"],
+   grid:[6,6,5,6,6,4], allies:["captainamerica","spiderman","warmachine","blackwidow"], enemies:["thanos","doctordoom","mandarin"]},
+
+  {id:"captainamerica", name:"Captain America", alias:"Steve Rogers", emoji:"🛡️", c1:"#2b5fb0", align:"hero",
+   teams:["avengers"], uni:"616", first:"Captain America Comics #1 (1941)", origin:"Super-Soldier Serum",
+   affil:"Avengers", bio:"A frail young man transformed into the pinnacle of human potential during WWII. A living symbol of ideals, wielding an unbreakable vibranium shield.",
+   powers:["Peak human physique","Master tactician","Vibranium shield","Unbreakable will"],
+   grid:[3,3,2,3,1,7], allies:["ironman","blackwidow","falcon","wintersoldier","thor"], enemies:["redskull","thanos"]},
+
+  {id:"thor", name:"Thor", alias:"Thor Odinson", emoji:"⚡", c1:"#4a86d8", align:"hero",
+   teams:["avengers","cosmic"], uni:"616", first:"Journey into Mystery #83 (1962)", origin:"Asgardian god",
+   affil:"Avengers · Asgard", bio:"The Norse God of Thunder and heir to Asgard, wielding the enchanted hammer Mjolnir. Millennia old, mighty, and endlessly noble.",
+   powers:["God-tier strength","Weather & lightning control","Mjolnir","Near-immortality"],
+   grid:[2,7,7,6,6,4], allies:["captainamerica","ironman","hulk"], enemies:["loki","thanos","hela"]},
+
+  {id:"hulk", name:"Hulk", alias:"Bruce Banner", emoji:"💪", c1:"#4fbf67", align:"hero",
+   teams:["avengers","defenders"], uni:"616", first:"Incredible Hulk #1 (1962)", origin:"Gamma radiation",
+   affil:"Avengers · Defenders", bio:"Physicist Bruce Banner is caught in a gamma bomb blast and transforms into the Hulk — the strongest there is, whose fury grows with every blow.",
+   powers:["Limitless strength","Rapid healing","Gamma durability","Rage escalation"],
+   grid:[6,7,3,7,5,4], allies:["thor","captainamerica","she_hulk"], enemies:["abomination","thanos"]},
+
+  {id:"blackwidow", name:"Black Widow", alias:"Natasha Romanoff", emoji:"🕸️", c1:"#b31217", align:"hero",
+   teams:["avengers","defenders"], uni:"616", first:"Tales of Suspense #52 (1964)", origin:"Red Room training",
+   affil:"Avengers · S.H.I.E.L.D.", bio:"A former Soviet super-spy turned Avenger. Elite assassin, master manipulator, and the team's conscience under fire.",
+   powers:["Master spy & assassin","Peak acrobatics","Widow's Bite","Multilingual tactician"],
+   grid:[4,2,3,2,3,6], allies:["captainamerica","hawkeye","ironman","wintersoldier"], enemies:["taskmaster"]},
+
+  {id:"hawkeye", name:"Hawkeye", alias:"Clint Barton", emoji:"🏹", c1:"#7a3fb0", align:"hero",
+   teams:["avengers"], uni:"616", first:"Tales of Suspense #57 (1964)", origin:"No powers — perfect aim",
+   affil:"Avengers", bio:"A former carnival marksman with no superpowers who never misses. Proof that a human with a bow belongs on a team of gods.",
+   powers:["Perfect marksmanship","Trick arrows","Acrobatics","Tactical genius"],
+   grid:[3,2,2,2,3,5], allies:["blackwidow","captainamerica"], enemies:["taskmaster"]},
+
+  {id:"blackpanther", name:"Black Panther", alias:"T'Challa", emoji:"🐾", c1:"#4b2e83", align:"hero",
+   teams:["avengers"], uni:"616", first:"Fantastic Four #52 (1966)", origin:"King of Wakanda · Heart-Shaped Herb",
+   affil:"Avengers · Wakanda", bio:"The warrior-king of Wakanda, the most technologically advanced nation on Earth. Diplomat, scientist, and the Panther god's champion.",
+   powers:["Enhanced senses & agility","Vibranium suit","Genius scientist","Master martial artist"],
+   grid:[6,4,3,4,4,6], allies:["captainamerica","storm","ironman"], enemies:["killmonger","doctordoom"]},
+
+  {id:"doctorstrange", name:"Doctor Strange", alias:"Stephen Strange", emoji:"🔮", c1:"#2aa198", align:"hero",
+   teams:["avengers","defenders","cosmic"], uni:"616", first:"Strange Tales #110 (1963)", origin:"Master of the Mystic Arts",
+   affil:"Defenders · Masters of Mystic Arts", bio:"An arrogant surgeon who loses his hands and finds a greater calling as Sorcerer Supreme — Earth's shield against mystic and multiversal threats.",
+   powers:["Mystic arts","Time & reality manipulation","Astral projection","Dimensional travel"],
+   grid:[6,2,4,4,6,4], allies:["wong","spiderman","ironman"], enemies:["dormammu","mordo"]},
+
+  {id:"scarletwitch", name:"Scarlet Witch", alias:"Wanda Maximoff", emoji:"🔴", c1:"#c1121f", align:"antihero",
+   teams:["avengers","xmen","cosmic"], uni:"616", first:"X-Men #4 (1964)", origin:"Chaos magic mutant",
+   affil:"Avengers", bio:"A reality-warping mutant whose chaos magic can rewrite existence itself. Torn between heroism and grief, she is among the most powerful beings alive.",
+   powers:["Chaos magic","Reality warping","Probability manipulation","Telekinesis"],
+   grid:[3,2,2,3,7,3], allies:["vision","quicksilver","doctorstrange"], enemies:["thanos"]},
+
+  {id:"vision", name:"Vision", alias:"The Vision", emoji:"💎", c1:"#8a3ffc", align:"hero",
+   teams:["avengers"], uni:"616", first:"Avengers #57 (1968)", origin:"Synthezoid built by Ultron",
+   affil:"Avengers", bio:"A synthetic being powered by the Mind Stone. Capable of altering his density from intangible to diamond-hard, he searches for what it means to be alive.",
+   powers:["Density control","Solar-beam blast","Flight","Superhuman computation"],
+   grid:[6,6,5,6,5,4], allies:["scarletwitch","ironman","captainamerica"], enemies:["ultron","thanos"]},
+
+  {id:"wolverine", name:"Wolverine", alias:"Logan / James Howlett", emoji:"🐺", c1:"#f0b429", align:"antihero",
+   teams:["xmen"], uni:"616", first:"Incredible Hulk #180–181 (1974)", origin:"Mutant · Weapon X program",
+   affil:"X-Men", bio:"A near-immortal mutant with a berserker rage, animal senses, and adamantium bones. The best there is at what he does — and what he does isn't nice.",
+   powers:["Adamantium claws & skeleton","Rapid healing","Enhanced senses","Century of combat"],
+   grid:[2,4,2,4,1,7], allies:["storm","cyclops","jeangrey","professorx","hulk"], enemies:["sabretooth","magneto"]},
+
+  {id:"storm", name:"Storm", alias:"Ororo Munroe", emoji:"🌩️", c1:"#38c6d9", align:"hero",
+   teams:["xmen"], uni:"616", first:"Giant-Size X-Men #1 (1975)", origin:"Weather-controlling mutant",
+   affil:"X-Men · Wakanda", bio:"Once worshipped as a goddess, Ororo commands wind, rain and lightning. A regal leader of the X-Men and one of mutantkind's most powerful members.",
+   powers:["Weather control","Flight","Atmokinesis","Team leadership"],
+   grid:[3,2,5,3,6,4], allies:["cyclops","jeangrey","wolverine","blackpanther","professorx"], enemies:["magneto"]},
+
+  {id:"cyclops", name:"Cyclops", alias:"Scott Summers", emoji:"🔺", c1:"#c1121f", align:"hero",
+   teams:["xmen"], uni:"616", first:"X-Men #1 (1963)", origin:"Optic-blast mutant",
+   affil:"X-Men", bio:"The X-Men's original field leader, firing uncontrollable optic force beams held in check by a ruby-quartz visor. A tactician defined by discipline and duty.",
+   powers:["Optic force blasts","Master tactician","Spatial awareness","Leadership"],
+   grid:[4,2,2,3,5,5], allies:["jeangrey","storm","wolverine","professorx"], enemies:["magneto","apocalypse"]},
+
+  {id:"jeangrey", name:"Jean Grey", alias:"Jean Grey / Phoenix", emoji:"🔥", c1:"#e0202a", align:"hero",
+   teams:["xmen","cosmic"], uni:"616", first:"X-Men #1 (1963)", origin:"Omega telepath · Phoenix Force host",
+   affil:"X-Men", bio:"An Omega-level telepath and telekinetic, and vessel of the cosmic Phoenix Force — the power of creation and destruction incarnate.",
+   powers:["Telepathy","Telekinesis","Phoenix Force","Psychic constructs"],
+   grid:[4,3,4,3,7,4], allies:["cyclops","storm","wolverine","professorx"], enemies:["magneto","apocalypse"]},
+
+  {id:"professorx", name:"Professor X", alias:"Charles Xavier", emoji:"🧠", c1:"#3b7fe0", align:"hero",
+   teams:["xmen"], uni:"616", first:"X-Men #1 (1963)", origin:"World's most powerful telepath",
+   affil:"X-Men (Founder)", bio:"The founder of the X-Men and Xavier's School. A dreamer of human-mutant coexistence whose mind is among the most powerful weapons on Earth.",
+   powers:["Vast telepathy","Mind control","Cerebro amplification","Genius geneticist"],
+   grid:[6,1,1,2,5,3], allies:["cyclops","jeangrey","storm","wolverine"], enemies:["magneto","apocalypse"]},
+
+  {id:"deadpool", name:"Deadpool", alias:"Wade Wilson", emoji:"💀", c1:"#c8102e", align:"antihero",
+   teams:["xmen","defenders"], uni:"616", first:"New Mutants #98 (1991)", origin:"Weapon X healing factor",
+   affil:"Mercenary / X-Force", bio:"The Merc with a Mouth — a wisecracking, fourth-wall-breaking mercenary whose insane healing factor makes him nearly impossible to kill.",
+   powers:["Regenerative healing","Master combatant","Fourth-wall awareness","Dual katanas"],
+   grid:[3,3,3,7,2,6], allies:["wolverine","spiderman"], enemies:["sabretooth"]},
+
+  {id:"captainmarvel", name:"Captain Marvel", alias:"Carol Danvers", emoji:"⭐", c1:"#e0202a", align:"hero",
+   teams:["avengers","cosmic"], uni:"616", first:"Marvel Super-Heroes #13 (1968)", origin:"Human-Kree hybrid",
+   affil:"Avengers", bio:"An Air Force pilot fused with Kree DNA, Carol channels cosmic energy as one of the most powerful heroes in the universe.",
+   powers:["Cosmic energy absorption","Flight","Photon blasts","Binary form"],
+   grid:[3,7,7,6,7,4], allies:["ironman","captainamerica","spiderman"], enemies:["thanos","ronan"]},
+
+  {id:"starlord", name:"Star-Lord", alias:"Peter Quill", emoji:"🚀", c1:"#c1121f", align:"hero",
+   teams:["guardians","cosmic"], uni:"616", first:"Marvel Preview #4 (1976)", origin:"Half-human, half-Celestial",
+   affil:"Guardians of the Galaxy", bio:"A roguish outlaw abducted from Earth as a boy, Peter Quill leads the ragtag Guardians of the Galaxy across the cosmos.",
+   powers:["Element guns","Piloting ace","Half-Celestial heritage","Tactical leadership"],
+   grid:[3,3,2,3,4,4], allies:["gamora","rocket","groot","drax"], enemies:["thanos","ronan"]},
+
+  {id:"gamora", name:"Gamora", alias:"Gamora Zen Whoberi", emoji:"🗡️", c1:"#4fbf67", align:"hero",
+   teams:["guardians","cosmic"], uni:"616", first:"Strange Tales #180 (1975)", origin:"Raised & augmented by Thanos",
+   affil:"Guardians of the Galaxy", bio:"The deadliest woman in the galaxy — Thanos' adopted daughter turned Guardian, seeking redemption from the monster who made her a weapon.",
+   powers:["Master assassin","Enhanced strength & agility","Godslayer blade","Cybernetic enhancements"],
+   grid:[3,4,4,4,2,6], allies:["starlord","rocket","groot","drax","nebula"], enemies:["thanos","ronan"]},
+
+  {id:"rocket", name:"Rocket", alias:"Rocket Raccoon", emoji:"🦝", c1:"#f0b429", align:"hero",
+   teams:["guardians","cosmic"], uni:"616", first:"Marvel Preview #7 (1976)", origin:"Genetically engineered",
+   affil:"Guardians of the Galaxy", bio:"A cybernetically enhanced raccoon with a genius for weapons and tactics, and a chip on his shoulder the size of a moon.",
+   powers:["Master tactician","Weapons engineering","Expert pilot","Marksmanship"],
+   grid:[5,2,3,2,3,4], allies:["groot","starlord","gamora","drax"], enemies:["ronan"]},
+
+  {id:"groot", name:"Groot", alias:"Groot", emoji:"🌳", c1:"#4fbf67", align:"hero",
+   teams:["guardians","cosmic"], uni:"616", first:"Tales to Astonish #13 (1960)", origin:"Flora colossus from Planet X",
+   affil:"Guardians of the Galaxy", bio:"A noble tree-like being who regrows from a single twig. Vocabulary of three words; heart the size of a forest.",
+   powers:["Body regeneration","Size & mass control","Immense strength","Root manipulation"],
+   grid:[1,6,1,6,1,3], allies:["rocket","starlord","gamora","drax"], enemies:["ronan"]},
+
+  {id:"drax", name:"Drax", alias:"Drax the Destroyer", emoji:"🔪", c1:"#38c6d9", align:"hero",
+   teams:["guardians","cosmic"], uni:"616", first:"Iron Man #55 (1973)", origin:"Reborn to kill Thanos",
+   affil:"Guardians of the Galaxy", bio:"A literal-minded warrior remade into a living weapon with one purpose: destroy Thanos. Fights beside the Guardians with blunt honesty.",
+   powers:["Superhuman strength","Enhanced durability","Twin daggers","Energy sensing"],
+   grid:[2,6,2,6,2,5], allies:["starlord","gamora","rocket","groot"], enemies:["thanos","ronan"]},
+
+  {id:"misterfantastic", name:"Mister Fantastic", alias:"Reed Richards", emoji:"🧬", c1:"#3b7fe0", align:"hero",
+   teams:["ff"], uni:"616", first:"Fantastic Four #1 (1961)", origin:"Cosmic ray exposure",
+   affil:"Fantastic Four (Founder)", bio:"The smartest man on Earth, able to stretch his body like elastic. Leader of the Fantastic Four and tireless explorer of the unknown.",
+   powers:["Elastic body","Peerless intellect","Invention","Multiversal science"],
+   grid:[7,2,2,5,1,3], allies:["invisiblewoman","humantorch","thing"], enemies:["doctordoom","galactus"]},
+
+  {id:"invisiblewoman", name:"Invisible Woman", alias:"Sue Storm", emoji:"⚪", c1:"#3b7fe0", align:"hero",
+   teams:["ff"], uni:"616", first:"Fantastic Four #1 (1961)", origin:"Cosmic ray exposure",
+   affil:"Fantastic Four", bio:"The most powerful member of the Fantastic Four — able to turn invisible and project force fields strong enough to stop an army.",
+   powers:["Invisibility","Force-field projection","Psionic constructs","Flight (via fields)"],
+   grid:[3,2,2,4,6,3], allies:["misterfantastic","humantorch","thing"], enemies:["doctordoom","galactus"]},
+
+  {id:"humantorch", name:"Human Torch", alias:"Johnny Storm", emoji:"🔥", c1:"#e0202a", align:"hero",
+   teams:["ff"], uni:"616", first:"Fantastic Four #1 (1961)", origin:"Cosmic ray exposure",
+   affil:"Fantastic Four", bio:"Sue's hotheaded younger brother, able to ignite his entire body, fly, and hurl fire. The daredevil spark of the First Family.",
+   powers:["Pyrokinesis","Flight","Nova flame","Heat absorption"],
+   grid:[2,2,5,3,6,3], allies:["misterfantastic","invisiblewoman","thing","spiderman"], enemies:["doctordoom"]},
+
+  {id:"thing", name:"The Thing", alias:"Ben Grimm", emoji:"🪨", c1:"#f0b429", align:"hero",
+   teams:["ff"], uni:"616", first:"Fantastic Four #1 (1961)", origin:"Cosmic ray exposure",
+   affil:"Fantastic Four", bio:"A pilot transformed into a rocky orange powerhouse. Gruff, loyal, and endlessly quotable — it's clobberin' time.",
+   powers:["Rock-hard hide","Immense strength","Near-invulnerability","Bare-knuckle brawler"],
+   grid:[3,6,2,6,1,5], allies:["misterfantastic","invisiblewoman","humantorch"], enemies:["doctordoom"]},
+
+  {id:"silversurfer", name:"Silver Surfer", alias:"Norrin Radd", emoji:"🏄", c1:"#8892a6", align:"hero",
+   teams:["cosmic"], uni:"616", first:"Fantastic Four #48 (1966)", origin:"Herald of Galactus",
+   affil:"Cosmic / Former Herald", bio:"A being who sacrificed himself to spare his world, remade as the gleaming herald of Galactus and wielder of the Power Cosmic.",
+   powers:["Power Cosmic","Faster-than-light flight","Matter manipulation","Cosmic awareness"],
+   grid:[6,7,7,7,7,3], allies:["misterfantastic","doctorstrange"], enemies:["galactus","thanos"]},
+
+  {id:"daredevil", name:"Daredevil", alias:"Matt Murdock", emoji:"👨‍⚖️", c1:"#b31217", align:"hero",
+   teams:["defenders"], uni:"616", first:"Daredevil #1 (1964)", origin:"Blinded by radioactive chemicals",
+   affil:"Defenders", bio:"Blinded as a boy, Matt Murdock's remaining senses became superhuman. By day a lawyer, by night the fearless guardian of Hell's Kitchen.",
+   powers:["Radar sense","Heightened senses","Master martial artist","Acrobatics"],
+   grid:[3,2,2,2,1,6], allies:["spiderman","punisher"], enemies:["kingpin"]},
+
+  {id:"punisher", name:"The Punisher", alias:"Frank Castle", emoji:"💀", c1:"#3a3a3a", align:"antihero",
+   teams:["defenders"], uni:"616", first:"Amazing Spider-Man #129 (1974)", origin:"War veteran seeking vengeance",
+   affil:"Vigilante", bio:"A former Marine whose family was murdered, waging a relentless one-man war on crime with no code but the mission.",
+   powers:["Military mastery","Weapons expert","Tactical genius","Peak human conditioning"],
+   grid:[4,3,2,2,2,5], allies:["daredevil"], enemies:["kingpin"]},
+
+  {id:"loki", name:"Loki", alias:"Loki Laufeyson", emoji:"🐍", c1:"#4fbf67", align:"antihero",
+   teams:["villains","cosmic"], uni:"616", first:"Journey into Mystery #85 (1962)", origin:"Frost Giant · God of Mischief",
+   affil:"Asgard / Variable", bio:"The God of Mischief and adopted brother of Thor. A silver-tongued trickster and sorcerer whose loyalties shift like smoke — sometimes villain, sometimes savior.",
+   powers:["Sorcery & illusion","Shapeshifting","Master manipulator","Near-immortality"],
+   grid:[5,5,5,5,6,4], allies:["thor"], enemies:["thor","thanos"]},
+
+  {id:"thanos", name:"Thanos", alias:"Thanos", emoji:"🟣", c1:"#8a3ffc", align:"villain",
+   teams:["villains","cosmic"], uni:"616", first:"Iron Man #55 (1973)", origin:"Eternal-Deviant of Titan",
+   affil:"The Black Order", bio:"The Mad Titan, obsessed with Death itself. Wielding the Infinity Gauntlet, he sought to erase half of all life to balance the universe.",
+   powers:["Cosmic strength","Infinity Gauntlet","Genius intellect","Energy manipulation"],
+   grid:[6,7,7,7,7,7], allies:["nebula"], enemies:["captainmarvel","ironman","thor","gamora","starlord"]},
+
+  {id:"doctordoom", name:"Doctor Doom", alias:"Victor Von Doom", emoji:"🟢", c1:"#4a5d23", align:"villain",
+   teams:["villains"], uni:"616", first:"Fantastic Four #5 (1962)", origin:"Sorcerer-scientist monarch of Latveria",
+   affil:"Latveria (Ruler)", bio:"Genius, sorcerer, and iron-masked monarch of Latveria. Reed Richards' greatest rival, convinced that only he can save the world by ruling it.",
+   powers:["Super-science","Sorcery","Powered armor","Master strategist"],
+   grid:[6,4,3,5,6,4], allies:[], enemies:["misterfantastic","blackpanther","ironman","thing"]},
+
+  {id:"magneto", name:"Magneto", alias:"Max Eisenhardt", emoji:"🧲", c1:"#8a3ffc", align:"villain",
+   teams:["villains","xmen"], uni:"616", first:"X-Men #1 (1963)", origin:"Omega-level magnetism mutant",
+   affil:"Brotherhood / X-Men (variable)", bio:"A Holocaust survivor who will do anything to protect mutantkind. Master of magnetism, sometimes the X-Men's greatest foe, sometimes their reluctant ally.",
+   powers:["Magnetism control","Force fields","Metal manipulation","Strategic genius"],
+   grid:[5,3,3,4,7,4], allies:["scarletwitch","quicksilver"], enemies:["professorx","cyclops","storm","wolverine"]},
+
+  {id:"greengoblin", name:"Green Goblin", alias:"Norman Osborn", emoji:"🎃", c1:"#4fbf67", align:"villain",
+   teams:["villains"], uni:"616", first:"Amazing Spider-Man #14 (1964)", origin:"Goblin Formula",
+   affil:"Oscorp", bio:"Industrialist Norman Osborn, driven mad by an experimental serum, becomes Spider-Man's most personal and dangerous nemesis.",
+   powers:["Enhanced strength","Goblin glider","Pumpkin bombs","Twisted genius"],
+   grid:[6,4,3,4,3,4], allies:["doctoroctopus"], enemies:["spiderman"]},
+
+  {id:"venom", name:"Venom", alias:"Eddie Brock + Symbiote", emoji:"👽", c1:"#3a3a3a", align:"antihero",
+   teams:["villains","defenders"], uni:"616", first:"Amazing Spider-Man #300 (1988)", origin:"Alien symbiote bond",
+   affil:"Lethal Protector", bio:"A living alien symbiote bonded to journalist Eddie Brock. Once Spider-Man's dark mirror, now a monstrous antihero with a taste for protecting the innocent (and eating the wicked).",
+   powers:["Symbiote shapeshifting","Superhuman strength","Wall-crawling","Immunity to spider-sense"],
+   grid:[3,6,4,5,2,4], allies:["spiderman"], enemies:["spiderman","carnage"]},
+
+  {id:"warmachine", name:"War Machine", alias:"James Rhodes", emoji:"⚙️", c1:"#5a6270", align:"hero",
+   teams:["avengers"], uni:"616", first:"Iron Man #118 (1979)", origin:"Military pilot in Stark armor",
+   affil:"Avengers · U.S. Military", bio:"Tony Stark's best friend and a decorated soldier, piloting a heavily armed variant of the Iron Man armor with military precision.",
+   powers:["Weaponized armor","Heavy ordnance","Flight","Combat training"],
+   grid:[4,6,5,6,5,4], allies:["ironman","falcon","captainmarvel"], enemies:["thanos"]},
+
+  {id:"falcon", name:"Falcon", alias:"Sam Wilson", emoji:"🦅", c1:"#c1121f", align:"hero",
+   teams:["avengers"], uni:"616", first:"Captain America #117 (1969)", origin:"Winged flight harness",
+   affil:"Avengers", bio:"A pararescue veteran who soars on mechanical wings and, in time, takes up the shield as Captain America himself.",
+   powers:["Winged flight","Aerial combat","Bird telepathy (Redwing)","Tactical skill"],
+   grid:[3,2,3,3,2,4], allies:["captainamerica","wintersoldier","warmachine"], enemies:["redskull"]},
+
+  {id:"wintersoldier", name:"Winter Soldier", alias:"Bucky Barnes", emoji:"❄️", c1:"#5a6270", align:"antihero",
+   teams:["avengers"], uni:"616", first:"Captain America #1 (1941)", origin:"Brainwashed HYDRA assassin",
+   affil:"Avengers", bio:"Cap's WWII partner, presumed dead and remade into a mind-controlled assassin. Freed from his programming, he fights to atone.",
+   powers:["Bionic arm","Master assassin","Peak conditioning","Marksmanship"],
+   grid:[3,4,3,4,2,6], allies:["captainamerica","falcon","blackwidow"], enemies:["redskull"]},
+
+  {id:"nebula", name:"Nebula", alias:"Nebula", emoji:"🔵", c1:"#3b7fe0", align:"antihero",
+   teams:["guardians","villains","cosmic"], uni:"616", first:"Avengers #257 (1985)", origin:"Cybernetic daughter of Thanos",
+   affil:"Guardians / Variable", bio:"Thanos' cybernetic daughter, rebuilt piece by piece as punishment for every defeat. She trades vengeance against her father for a place among the Guardians.",
+   powers:["Cybernetic enhancements","Master combatant","Reconfigurable body","Piloting"],
+   grid:[4,4,4,5,3,5], allies:["gamora","starlord"], enemies:["thanos"]}
+];
+
+/* helper look-ups for relationship chips */
+const BY_ID = Object.fromEntries(C.map(c=>[c.id,c]));
+// a couple of relationship references point at conceptual foes with no full card; give them light stubs:
+const STUB = {
+  greengoblin:BY_ID.greengoblin, doctoroctopus:{name:"Doctor Octopus",emoji:"🐙"},
+  redskull:{name:"Red Skull",emoji:"☠️"}, hela:{name:"Hela",emoji:"👑"},
+  abomination:{name:"Abomination",emoji:"🦎"}, taskmaster:{name:"Taskmaster",emoji:"🎯"},
+  killmonger:{name:"Killmonger",emoji:"⚔️"}, dormammu:{name:"Dormammu",emoji:"🔥"},
+  mordo:{name:"Baron Mordo",emoji:"🌀"}, wong:{name:"Wong",emoji:"📿"},
+  ultron:{name:"Ultron",emoji:"🤖"}, sabretooth:{name:"Sabretooth",emoji:"🐆"},
+  apocalypse:{name:"Apocalypse",emoji:"⛧"}, mandarin:{name:"Mandarin",emoji:"💍"},
+  ronan:{name:"Ronan",emoji:"🔨"}, galactus:{name:"Galactus",emoji:"🪐"},
+  kingpin:{name:"Kingpin",emoji:"🎩"}, carnage:{name:"Carnage",emoji:"🩸"},
+  quicksilver:{name:"Quicksilver",emoji:"💨"}, she_hulk:{name:"She-Hulk",emoji:"💚"},
+  venom_ally:BY_ID.venom
+};
+function lookup(id){ return BY_ID[id] || STUB[id] || {name:id,emoji:"❓"}; }
+
+/* ============ RENDER: HERO STATS ============ */
+const heroes = C.filter(c=>c.align==="hero").length;
+const villains = C.filter(c=>c.teams.includes("villains")).length;
+document.getElementById("heroStats").innerHTML = [
+  [C.length,"Characters"],[Object.keys(TEAMS).length,"Teams"],
+  [Object.keys(UNIS).length,"Universes"],["60+","Years of lore"]
+].map(([n,l])=>`<div class="hstat"><b>${n}</b><span>${l}</span></div>`).join("");
+
+/* ============ RENDER: FILTER CHIPS ============ */
+let activeTeam="all", activeUni="all", query="";
+const teamChips = document.getElementById("teamChips");
+teamChips.innerHTML = `<button class="chip" data-team="all" aria-pressed="true">All</button>` +
+  Object.entries(TEAMS).map(([k,v])=>`<button class="chip" data-team="${k}" aria-pressed="false">${v.name}</button>`).join("");
+const uniChips = document.getElementById("uniChips");
+uniChips.innerHTML = `<button class="chip" data-uni="all" aria-pressed="true">All Earths</button>` +
+  Object.entries(UNIS).filter(([k])=>C.some(c=>c.uni===k)).map(([k,v])=>`<button class="chip" data-uni="${k}" aria-pressed="false">${v.code}</button>`).join("");
+
+teamChips.addEventListener("click",e=>{
+  const b=e.target.closest("[data-team]"); if(!b)return;
+  activeTeam=b.dataset.team;
+  [...teamChips.children].forEach(c=>c.setAttribute("aria-pressed", c===b));
+  render();
+});
+uniChips.addEventListener("click",e=>{
+  const b=e.target.closest("[data-uni]"); if(!b)return;
+  activeUni=b.dataset.uni;
+  [...uniChips.children].forEach(c=>c.setAttribute("aria-pressed", c===b));
+  render();
+});
+document.getElementById("search").addEventListener("input",e=>{ query=e.target.value.toLowerCase().trim(); render(); });
+
+/* ============ RENDER: ROSTER GRID ============ */
+const ALIGN_COLOR={hero:"#4fbf67",antihero:"#f0b429",villain:"#e62429"};
+const grid=document.getElementById("grid");
+function matches(c){
+  if(activeTeam!=="all" && !c.teams.includes(activeTeam)) return false;
+  if(activeUni!=="all" && c.uni!==activeUni) return false;
+  if(query){
+    const hay=(c.name+" "+c.alias+" "+c.powers.join(" ")+" "+c.affil+" "+c.bio).toLowerCase();
+    if(!hay.includes(query)) return false;
+  }
+  return true;
+}
+function cardHTML(c){
+  const primary=TEAMS[c.teams[0]];
+  const tags=c.teams.slice(0,2).map(t=>`<span class="tag" style="background:${TEAMS[t].color}">${TEAMS[t].name}</span>`).join("");
+  return `<article class="card" tabindex="0" data-id="${c.id}" style="--c1:${c.c1}">
+    <span class="align" style="background:${ALIGN_COLOR[c.align]}" title="${c.align}"></span>
+    <div class="emblem">${c.emoji}</div>
+    <div class="body">
+      <div class="name">${c.name}</div>
+      <div class="alias">${c.alias}</div>
+      <div class="tags">${tags}</div>
+    </div>
+  </article>`;
+}
+function render(){
+  const list=C.filter(matches);
+  grid.innerHTML = list.length ? list.map(cardHTML).join("")
+    : `<div class="no-results">No characters match that search.</div>`;
+  document.getElementById("rosterCount").textContent = `${list.length} / ${C.length} shown`;
+}
+
+/* ============ MODAL ============ */
+const modal=document.getElementById("modal");
+const modalCard=document.getElementById("modalCard");
+let lastFocus=null;
+
+function relHTML(ids,type){
+  if(!ids || !ids.length) return `<span class="rel-empty">None on record.</span>`;
+  return ids.map(id=>{
+    const r=lookup(id); const clickable=!!BY_ID[id];
+    return `<button ${clickable?`data-goto="${id}"`:'disabled style="opacity:.7;cursor:default"'}>
+      <span class="em">${r.emoji||"❓"}</span>${r.name}</button>`;
+  }).join("");
+}
+function openChar(id){
+  const c=BY_ID[id]; if(!c) return;
+  lastFocus=document.activeElement;
+  const uni=UNIS[c.uni];
+  const teams=c.teams.map(t=>`<span class="tag" style="background:${TEAMS[t].color}">${TEAMS[t].name}</span>`).join("");
+  const gridHTML=P.map((p,i)=>{
+    const v=c.grid[i]; const pct=Math.round(v/7*100);
+    return `<div class="powbar"><div class="lab"><span>${p}</span><span>${v}/7</span></div>
+      <div class="track"><div class="fill" style="width:0" data-w="${pct}"></div></div></div>`;
+  }).join("");
+  modalCard.innerHTML=`
+    <button class="m-close" id="mClose" aria-label="Close">✕</button>
+    <div class="m-hero" style="--c1:${c.c1}">
+      <div class="m-hero-row">
+        <div class="m-emblem">${c.emoji}</div>
+        <div class="m-title">
+          <h2 id="mName">${c.name}</h2>
+          <div class="alias">${c.alias}</div>
+          <div class="meta">${uni.code} · ${uni.name}</div>
+        </div>
+      </div>
+      <div class="pills">${teams}</div>
+    </div>
+    <div class="m-body">
+      <p class="m-bio">${c.bio}</p>
+      <div class="m-grid2">
+        <div class="block">
+          <h4>Dossier</h4>
+          <div class="fact"><span>First Appearance</span><span class="mono">${c.first}</span></div>
+          <div class="fact"><span>Origin</span><span>${c.origin}</span></div>
+          <div class="fact"><span>Affiliation</span><span>${c.affil}</span></div>
+          <div class="fact"><span>Alignment</span><span style="color:${ALIGN_COLOR[c.align]};text-transform:capitalize">${c.align}</span></div>
+        </div>
+        <div class="block">
+          <h4>Power Grid</h4>
+          ${gridHTML}
+        </div>
+      </div>
+      <div class="block">
+        <h4>Abilities</h4>
+        <div class="rel">${c.powers.map(p=>`<button disabled style="cursor:default"><span class="em">✦</span>${p}</button>`).join("")}</div>
+      </div>
+      <div class="m-grid2">
+        <div class="block">
+          <h4>Allies &amp; Kin</h4>
+          <div class="rel">${relHTML(c.allies)}</div>
+        </div>
+        <div class="block">
+          <h4>Rivals &amp; Foes</h4>
+          <div class="rel enemy">${relHTML(c.enemies)}</div>
+        </div>
+      </div>
+    </div>`;
+  modal.classList.add("open");
+  document.body.style.overflow="hidden";
+  // animate power bars
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    modalCard.querySelectorAll(".fill").forEach(f=>f.style.width=f.dataset.w+"%");
+  }));
+  document.getElementById("mClose").focus();
+}
+function closeModal(){
+  modal.classList.remove("open");
+  document.body.style.overflow="";
+  if(lastFocus) lastFocus.focus();
+}
+grid.addEventListener("click",e=>{const card=e.target.closest("[data-id]"); if(card) openChar(card.dataset.id);});
+grid.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.closest("[data-id]")){e.preventDefault();openChar(e.target.closest("[data-id]").dataset.id);}});
+modalCard.addEventListener("click",e=>{
+  if(e.target.id==="mClose") return closeModal();
+  const g=e.target.closest("[data-goto]"); if(g) openChar(g.dataset.goto);
+});
+modal.addEventListener("click",e=>{if(e.target===modal) closeModal();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&modal.classList.contains("open"))closeModal();});
+
+/* ============ TIMELINE ============ */
+const PHASES=[
+  {yr:"2008–2012", name:"Phase One", note:"Heroes assembled from scattered origins into a single team.",
+   beats:["<b>Iron Man</b> is born in a cave","<b>Captain America</b> wakes in a new century","<b>The Avengers</b> unite for New York"]},
+  {yr:"2013–2015", name:"Phase Two", note:"The world widens — magic, cosmos, and androids enter play.",
+   beats:["<b>Guardians</b> form across the galaxy","The <b>Infinity Stones</b> take center stage","<b>Ultron</b> and <b>Vision</b> emerge"]},
+  {yr:"2016–2019", name:"Phase Three", note:"Ideals fracture, then reunite against the Mad Titan.",
+   beats:["Heroes split in <b>Civil War</b>","<b>Thanos</b> claims the Gauntlet","The <b>Blip</b> is undone in Endgame"]},
+  {yr:"2021–2025", name:"The Multiverse Saga", note:"The Sacred Timeline breaks; variants spill across realities.",
+   beats:["<b>Loki</b> & the <b>TVA</b> guard time","<b>Doctor Strange</b> opens the multiverse","<b>Kang</b>'s variants converge"]},
+  {yr:"Comics · 1961→", name:"Earth-616 Prime", note:"Six decades of continuity running in parallel to the films.",
+   beats:["<b>Fantastic Four</b> launch the age","<b>Secret Wars</b> reshape reality","<b>Krakoa</b> reinvents mutantkind"]}
+];
+document.getElementById("phases").innerHTML=PHASES.map(p=>`
+  <div class="phase"><span class="dot"></span>
+    <span class="yr">${p.yr}</span>
+    <h3>${p.name}</h3>
+    <p>${p.note}</p>
+    <ul>${p.beats.map(b=>`<li>${b}</li>`).join("")}</ul>
+  </div>`).join("");
+
+/* ============ UNIVERSES ============ */
+document.getElementById("unis").innerHTML=Object.values(UNIS).map(u=>`
+  <div class="uni" style="--uc:${u.color}">
+    <span class="code">${u.code}</span>
+    <h3>${u.name}</h3>
+    <p>${u.desc}</p>
+    <div class="who">${u.who.map(w=>`<span>${w}</span>`).join("")}</div>
+  </div>`).join("");
+
+/* ============ THEME TOGGLE ============ */
+const themeBtn=document.getElementById("themeBtn");
+try{ const saved=localStorage.getItem("codex-theme"); if(saved) document.documentElement.setAttribute("data-theme",saved); }catch(e){}
+themeBtn.addEventListener("click",()=>{
+  const cur=document.documentElement.getAttribute("data-theme");
+  const isDark = cur ? cur==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  const next=isDark?"light":"dark";
+  document.documentElement.setAttribute("data-theme",next);
+  try{localStorage.setItem("codex-theme",next);}catch(e){}
+});
+
+/* ============ HERO CONSTELLATION CANVAS ============ */
+(function(){
+  const cv=document.getElementById("web"), ctx=cv.getContext("2d");
+  let w,h,nodes,raf; const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function size(){ const r=cv.parentElement.getBoundingClientRect(); w=cv.width=r.width*devicePixelRatio; h=cv.height=r.height*devicePixelRatio; }
+  function init(){
+    size();
+    const N=Math.min(46, Math.floor(w/34));
+    nodes=Array.from({length:N},()=>({
+      x:Math.random()*w, y:Math.random()*h,
+      vx:(Math.random()-.5)*.18*devicePixelRatio, vy:(Math.random()-.5)*.18*devicePixelRatio,
+      r:(Math.random()*1.6+1)*devicePixelRatio,
+      c:Math.random()<.5?"230,36,41":(Math.random()<.5?"240,180,41":"214,64,159")
+    }));
+  }
+  function frame(){
+    ctx.clearRect(0,0,w,h);
+    for(let i=0;i<nodes.length;i++){
+      const a=nodes[i]; a.x+=a.vx; a.y+=a.vy;
+      if(a.x<0||a.x>w)a.vx*=-1; if(a.y<0||a.y>h)a.vy*=-1;
+      for(let j=i+1;j<nodes.length;j++){
+        const b=nodes[j], dx=a.x-b.x, dy=a.y-b.y, d=Math.hypot(dx,dy), max=130*devicePixelRatio;
+        if(d<max){ ctx.strokeStyle=`rgba(255,255,255,${(1-d/max)*.16})`; ctx.lineWidth=devicePixelRatio; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); }
+      }
+      ctx.beginPath(); ctx.fillStyle=`rgba(${a.c},.9)`; ctx.arc(a.x,a.y,a.r,0,7); ctx.fill();
+    }
+    raf=requestAnimationFrame(frame);
+  }
+  init();
+  if(reduce){ frame(); cancelAnimationFrame(raf); } else frame();
+  addEventListener("resize",()=>{cancelAnimationFrame(raf); init(); if(!reduce)frame();});
+})();
+
+/* boot */
+render();
+</script>
+</head>
+<body>
+</body>
+</html>
