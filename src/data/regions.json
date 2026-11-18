@@ -1,0 +1,28 @@
+{
+  "_comment": "Friendly body regions. `skin` lists Z-Anatomy 'Regions of human body' mesh names (without .l/.r) that belong to the region. Shared by the model pipeline and the app. id 0 = unknown.",
+  "regions": [
+    { "id": 1,  "key": "head",       "label": "Head & face",     "skin": ["Frontal region","Parietal region","Occipital region","Temporal region","Mastoid region","Auricular region","Orbital region","Infra-orbital region","Nasal region","Zygomatic region","Buccal region","Oral region","Nasolabial sulcus","Eyebrow","Helix","Antihelix","Antitragus","Tragus","Apex of auricle","Anterior notch of auricle","Auricular tubercle","Cavity of concha","Concha of auricle","Crura of antihelix","Cymba conchae","Eminentia conchae","Eminentia fossae triangularis","Eminentia scaphae","Fossa antihelica","Intertragic incisure","Lobule of auricle","Posterior auricular groove","Scapha","Triangular fossa","Angle of mouth","Labial commissure","Philtrum","Tubercle of upper lip"] },
+    { "id": 2,  "key": "jaw",        "label": "Jaw",             "skin": ["Parotideomasseteric region","Mental region","Mentolabial sulcus","Submandibular triangle","Submental triangle"] },
+    { "id": 3,  "key": "neck",       "label": "Neck",            "skin": ["Lateral region of neck","Posterior region of neck","Sternocleidomastoid region","Carotid triangle","Muscular triangle","Greater supraclavicular fossa","Lesser supraclavicular fossa"] },
+    { "id": 4,  "key": "shoulder",   "label": "Shoulder",        "skin": ["Deltoid region"] },
+    { "id": 5,  "key": "chest",      "label": "Chest & ribs",    "skin": ["Pectoral region","Mammary region","Inframammary region","Presternal region","Infraclavicular fossa","Deltopectoral triangle","Lateral region of thorax"] },
+    { "id": 6,  "key": "upper_back", "label": "Upper back",      "skin": ["Scapular region","Interscapular region","Triangle of auscultation"] },
+    { "id": 7,  "key": "mid_back",   "label": "Mid back",        "skin": ["Infrascapular region"] },
+    { "id": 8,  "key": "lower_back", "label": "Lower back",      "skin": ["Lumbar region","Sacral region"] },
+    { "id": 9,  "key": "abdomen",    "label": "Abdomen",         "skin": ["Epigastric region","Hypochondriac region","Umbilical region","Umbilicus","Lateral region of abdomen","Hypogastric region"] },
+    { "id": 10, "key": "hip_groin",  "label": "Hip & groin",     "skin": ["Hip region","Inguinal region","Urogenital region","Anal region","Femoral triangle"] },
+    { "id": 11, "key": "glutes",     "label": "Buttock",         "skin": ["Gluteal region","Gluteal fold"] },
+    { "id": 12, "key": "upper_arm",  "label": "Upper arm",       "skin": ["Anterior region of arm","Posterior region of arm","Lateral bicipital groove","Medial bicipital groove"] },
+    { "id": 13, "key": "elbow",      "label": "Elbow",           "skin": ["Anterior region of elbow","Posterior region of elbow","Cubital fossa"] },
+    { "id": 14, "key": "forearm",    "label": "Forearm",         "skin": ["Anterior region of forearm","Posterior region of forearm","Lateral border of forearm","Medial border of forearm"] },
+    { "id": 15, "key": "wrist_hand", "label": "Wrist & hand",    "skin": ["Anterior region of wrist","Posterior region of wrist","Radial foveola","Palm","Dorsum of hand","Dorsal surfaces of digits of hand","Palmar surfaces of digits of hand","Nail plate","Perionyx"] },
+    { "id": 16, "key": "thigh",      "label": "Thigh",           "skin": ["Anterior region of thigh","Posterior region of thigh"] },
+    { "id": 17, "key": "knee",       "label": "Knee",            "skin": ["Anterior region of knee","Posterior region of knee","Popliteal fossa"] },
+    { "id": 18, "key": "lower_leg",  "label": "Lower leg & calf","skin": ["Anterior region of leg","Posterior region of leg"] },
+    { "id": 19, "key": "ankle_foot", "label": "Ankle & foot",    "skin": ["Anterior region of ankle","Lateral malleolus","Medial malleolus","Lateral retromalleolar region","Medial retromalleolar region","Heel region","Sole","Dorsum of foot","Lateral border of foot","Medial border of foot","Metatarsal region","Hallucial eminence","Distal transverse arch of foot","Proximal transverse arch of foot","Lateral part of longitudinal arch of foot","Medial part of longitudinal arch of foot","Dorsal surfaces of digits of foot","Plantar surfaces of digits of foot","Nail plate (foot)","Perionyx (foot)"] }
+  ],
+  "splitByHeight": {
+    "_comment": "Skin meshes spanning several regions; vertices assigned by height relative to reference meshes.",
+    "Vertebral region": "back"
+  }
+}
