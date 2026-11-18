@@ -20,12 +20,12 @@ export default function App() {
     requestPersistence();
   }, []);
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '') || '/'}>
       <ToastProvider>
         <div className="app">
           <nav className="nav" aria-label="Main">
             <div className="brand" aria-hidden>
-              <img src="/icon.svg" width={40} height={40} alt="" />
+              <img src={`${import.meta.env.BASE_URL}icon.svg`} width={40} height={40} alt="" />
             </div>
             {NAV.map((n) => (
               <NavLink key={n.to} to={n.to} end={n.end} className={({ isActive }) => (isActive ? 'active' : '')}>

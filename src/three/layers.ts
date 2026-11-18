@@ -61,7 +61,7 @@ export function loadLayer(key: LayerKey, onProgress?: (fraction: number) => void
 async function build(key: LayerKey, onProgress?: (f: number) => void): Promise<LayerData> {
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
-  const gltf = await loader.loadAsync(`/models/${key}.glb`, (e) => {
+  const gltf = await loader.loadAsync(`${import.meta.env.BASE_URL}models/${key}.glb`, (e) => {
     if (e.total) onProgress?.(e.loaded / e.total);
   });
   gltf.scene.updateMatrixWorld(true);
