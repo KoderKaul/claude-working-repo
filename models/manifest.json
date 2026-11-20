@@ -1,0 +1,25 @@
+{
+  "source": "Z-Anatomy (CC BY-SA 4.0)",
+  "layers": {
+    "skin": {
+      "file": "skin.glb",
+      "parts": 250,
+      "triangles": 114362
+    },
+    "muscles": {
+      "file": "muscles.glb",
+      "parts": 391,
+      "triangles": 228994
+    },
+    "bones": {
+      "file": "bones.glb",
+      "parts": 250,
+      "triangles": 131579
+    },
+    "joints": {
+      "file": "joints.glb",
+      "parts": 477,
+      "triangles": 191534
+    }
+  }
+}

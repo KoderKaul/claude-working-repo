@@ -1,0 +1,9 @@
+The 3D models in this folder (skin.glb, muscles.glb, joints.glb, bones.glb) are adapted from
+Z-Anatomy (https://www.z-anatomy.com, https://github.com/LluisV/Z-Anatomy) by Gauthier Kervyn
+and Lluís Vinent Juanico, itself based on BodyParts3D (© The Database Center for Life Science).
+
+Changes: selected structures, simplified (decimated), tagged with body-region ids in the first
+UV channel, split into four layers and compressed for the web (see tools/model-pipeline).
+
+Licensed under Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0):
+https://creativecommons.org/licenses/by-sa/4.0/
