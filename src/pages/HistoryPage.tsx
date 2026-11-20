@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router-dom';
-import { db } from '../db/db';
-import type { DailyCheckIn, PainEntry } from '../db/types';
+import { db, deleteRemedyLog } from '../db/db';
+import type { DailyCheckIn, PainEntry, RemedyLog } from '../db/types';
+import { remedyById } from '../data/remedies';
 import { REGIONS, placeLabel } from '../lib/regions';
 import { formatTime, localDate } from '../lib/time';
 import { structureLabel } from '../lib/anatomy';
@@ -21,6 +22,7 @@ function checkInText(c: DailyCheckIn) {
 export default function HistoryPage() {
   const entries = useLiveQuery(() => db.entries.orderBy('occurredAt').reverse().toArray(), []);
   const checkins = useLiveQuery(() => db.checkins.toArray(), []);
+  const logs = useLiveQuery(() => db.remedyLogs.orderBy('doneAt').reverse().toArray(), []);
   const [region, setRegion] = useState<number | 0>(0);
   const [editId, setEditId] = useState<string | null>(null);
   const [checkInDate, setCheckInDate] = useState<string | null>(null);
@@ -36,9 +38,17 @@ export default function HistoryPage() {
       if (!groups.has(d)) groups.set(d, []);
       groups.get(d)!.push(e);
     }
+    const remedies = new Map<string, RemedyLog[]>();
+    for (const l of logs ?? []) {
+      if (region && l.regionId !== region) continue;
+      const d = localDate({ occurredAt: l.doneAt, tzOffsetMin: l.tzOffsetMin });
+      if (!remedies.has(d)) remedies.set(d, []);
+      remedies.get(d)!.push(l);
+      if (!groups.has(d)) groups.set(d, []);
+    }
     if (!region) for (const c of checkins ?? []) if (!groups.has(c.date)) groups.set(c.date, []);
-    return [...groups.keys()].sort().reverse().map((d) => ({ date: d, entries: groups.get(d)!, checkIn: ci.get(d) }));
-  }, [entries, checkins, region]);
+    return [...groups.keys()].sort().reverse().map((d) => ({ date: d, entries: groups.get(d)!, checkIn: ci.get(d), remedies: remedies.get(d) ?? [] }));
+  }, [entries, checkins, logs, region]);
 
   if (!entries) return <div className="page" />;
 
@@ -69,7 +79,10 @@ export default function HistoryPage() {
               </div>
               {day.checkIn && checkInText(day.checkIn) && <p className="small muted" style={{ margin: '-4px 0 6px' }}>{checkInText(day.checkIn)}</p>}
               {day.entries.length === 0 && <p className="small muted" style={{ margin: '0 0 6px' }}>No pain logged.</p>}
-              {day.entries.map((e) => (
+              {[
+                ...day.entries.map((e) => ({ t: e.occurredAt, e, l: null as RemedyLog | null })),
+                ...day.remedies.map((l) => ({ t: l.doneAt, e: null as PainEntry | null, l })),
+              ].sort((a, b) => b.t.localeCompare(a.t)).map(({ e, l }) => e ? (
                 <button key={e.id} className="entry-row" onClick={() => setEditId(e.id)}>
                   <IntensityBadge value={e.intensity} />
                   <div className="grow">
@@ -80,6 +93,16 @@ export default function HistoryPage() {
                   </div>
                   {e.demo && <span className="pill">sample</span>}
                 </button>
+              ) : l && (
+                <div key={l.id} className="entry-row">
+                  <span className="badge done-badge" aria-hidden>✓</span>
+                  <div className="grow">
+                    <div className="title">{remedyById(l.remedyId)?.title ?? l.remedyId}</div>
+                    <div className="sub">{[formatTime(l.doneAt), placeLabel(l.regionId, l.side), l.feeling && `felt ${l.feeling}`].filter(Boolean).join(' · ')}</div>
+                  </div>
+                  {l.demo && <span className="pill">sample</span>}
+                  <button className="btn ghost small" aria-label="Delete remedy session" onClick={() => confirm('Delete this remedy session?') && deleteRemedyLog(l.id)}>✕</button>
+                </div>
               ))}
             </section>
           ))}

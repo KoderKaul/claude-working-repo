@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import type { LayerKey, Side } from '../db/types';
-import { loadLayer, paint, pickFromFace, type LayerData, type Pick } from './layers';
+import { findParts, loadLayer, paint, pickFromFace, type LayerData, type Pick } from './layers';
 import { LAYERS } from '../lib/anatomy';
 
 /** Which layers are drawn for each "depth" the user chooses. */
@@ -16,7 +16,7 @@ const VISIBLE: Record<LayerKey, LayerKey[]> = {
 };
 
 const TARGET = new THREE.Vector3(0, 0.9, 0);
-type View = 'front' | 'back' | 'left' | 'right';
+export type View = 'front' | 'back' | 'left' | 'right';
 const VIEW_DIR: Record<View, [number, number, number]> = {
   front: [0, 0.08, 1],
   back: [0, 0.08, -1],
@@ -33,6 +33,10 @@ export interface BodyViewerProps {
   selectedPlace?: { regionId: number; side: Side } | null;
   heat?: Map<string, number>;
   heatMax?: number;
+  /** Structures to light up (name fragments) on a side (0 = both). */
+  highlight?: { names: string[]; side: Side } | null;
+  /** Turn the body to this view whenever it changes. */
+  focusView?: View | null;
   className?: string;
 }
 
@@ -42,7 +46,12 @@ export default function BodyViewer(props: BodyViewerProps) {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<{ v: View; n: number }>({ v: 'front', n: 0 });
-  const wanted = VISIBLE[depth];
+  const focusMode = !!props.highlight;
+  const wanted = focusMode && depth === 'skin' ? (['skin', 'muscles'] as LayerKey[]) : VISIBLE[depth];
+
+  useEffect(() => {
+    if (props.focusView) setView((v) => ({ v: props.focusView!, n: v.n + 1 }));
+  }, [props.focusView]);
 
   useEffect(() => {
     let alive = true;
@@ -61,9 +70,25 @@ export default function BodyViewer(props: BodyViewerProps) {
     return () => {
       alive = false;
     };
-  }, [depth]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [depth, focusMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const ready = wanted.every((k) => layers[k]);
+
+  // centre the camera on the highlighted structures
+  const hl = props.highlight;
+  const hlKey = hl ? `${hl.side}|${hl.names.join(',')}` : '';
+  const focus = useMemo(() => {
+    const m = layers.muscles;
+    if (!hl || !m) return null;
+    const parts = findParts(m, hl.names, hl.side);
+    if (!parts.size) return null;
+    const box = new THREE.Box3();
+    const pos = m.geometry.attributes.position;
+    const v = new THREE.Vector3();
+    for (let i = 0; i < m.partOfVertex.length; i++) if (parts.has(m.partOfVertex[i])) box.expandByPoint(v.fromBufferAttribute(pos, i));
+    const size = box.getSize(new THREE.Vector3());
+    return { center: box.getCenter(new THREE.Vector3()), dist: Math.min(3.4, Math.max(1.1, Math.max(size.x, size.y, size.z) * 2.6)) };
+  }, [layers.muscles, hlKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className={`viewer ${props.className ?? ''}`}>
@@ -76,9 +101,9 @@ export default function BodyViewer(props: BodyViewerProps) {
         <Lights />
         {wanted.map((k) => {
           const d = layers[k];
-          return d ? <LayerMesh key={k} data={d} {...props} /> : null;
+          return d ? <LayerMesh key={k} data={d} {...props} focusMode={focusMode} /> : null;
         })}
-        <Controls view={view} />
+        <Controls view={view} focus={focus} />
       </Canvas>
 
       <div className="viewer-depth" role="radiogroup" aria-label="Layer">
@@ -130,17 +155,18 @@ function Lights() {
   return <hemisphereLight args={[0xffffff, 0x8d8378, 1.25]} />;
 }
 
-function Controls({ view }: { view: { v: View; n: number } }) {
+function Controls({ view, focus }: { view: { v: View; n: number }; focus: { center: THREE.Vector3; dist: number } | null }) {
   const ref = useRef<OrbitControlsImpl>(null);
   const { camera } = useThree();
   useEffect(() => {
-    if (view.n === 0 || !ref.current) return;
-    const dist = Math.max(2.2, camera.position.distanceTo(ref.current.target));
+    if ((view.n === 0 && !focus) || !ref.current) return;
+    const target = focus ? focus.center : TARGET;
+    const dist = focus ? focus.dist : Math.max(2.2, camera.position.distanceTo(ref.current.target));
     const dir = new THREE.Vector3(...VIEW_DIR[view.v]).normalize();
-    ref.current.target.copy(TARGET);
-    camera.position.copy(TARGET).addScaledVector(dir, dist);
+    ref.current.target.copy(target);
+    camera.position.copy(target).addScaledVector(dir, dist);
     ref.current.update();
-  }, [view, camera]);
+  }, [view, camera, focus]);
   return (
     <OrbitControls
       ref={ref}
@@ -157,8 +183,8 @@ function Controls({ view }: { view: { v: View; n: number } }) {
 }
 
 function LayerMesh({
-  data, onPick, selectedPart, selectedPlace, heat, heatMax,
-}: { data: LayerData } & BodyViewerProps) {
+  data, onPick, selectedPart, selectedPlace, heat, heatMax, highlight, focusMode,
+}: { data: LayerData; focusMode?: boolean } & BodyViewerProps) {
   const material = useMemo(
     () => new THREE.MeshStandardMaterial({
         vertexColors: true,
@@ -166,14 +192,41 @@ function LayerMesh({
         metalness: 0,
         // the source model has tiny gaps between pieces; drawing back faces hides them
         side: THREE.DoubleSide,
+        // focus mode: everything see-through except the highlighted structures
+        transparent: !!focusMode,
+        opacity: focusMode ? (data.key === 'skin' ? 0.06 : data.key === 'bones' ? 0.14 : 0.1) : 1,
+        depthWrite: !focusMode,
       }),
-    [data.key],
+    [data.key, focusMode],
+  );
+  const solidMaterial = useMemo(
+    () => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5, metalness: 0, side: THREE.DoubleSide }),
+    [],
   );
   const part = selectedPart && selectedPart.layer === data.key ? selectedPart.part : null;
+  const hlKey = highlight ? `${highlight.side}|${highlight.names.join(',')}` : '';
+  const highlightParts = useMemo(
+    () => (highlight && data.key !== 'skin' ? findParts(data, highlight.names, highlight.side) : null),
+    [data, hlKey], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  // the highlighted structures as their own solid mesh (shares the big mesh's vertex data)
+  const focusGeometry = useMemo(() => {
+    if (!highlightParts?.size || !data.geometry.index) return null;
+    const idx = data.geometry.index.array as Uint32Array;
+    const keep: number[] = [];
+    for (let t = 0; t < idx.length; t += 3) if (highlightParts.has(data.partOfVertex[idx[t]])) keep.push(idx[t], idx[t + 1], idx[t + 2]);
+    const g = new THREE.BufferGeometry();
+    for (const k of ['position', 'normal', 'color']) g.setAttribute(k, data.geometry.attributes[k]);
+    g.setIndex(new THREE.BufferAttribute(new Uint32Array(keep), 1));
+    g.computeBoundingSphere();
+    return g;
+  }, [data, highlightParts]);
+  useEffect(() => () => focusGeometry?.dispose(), [focusGeometry]);
 
   useEffect(() => {
-    paint(data, { heat, heatMax, selectedPart: part, selectedPlace });
-  }, [data, heat, heatMax, part, selectedPlace?.regionId, selectedPlace?.side]); // eslint-disable-line react-hooks/exhaustive-deps
+    paint(data, { heat, heatMax, selectedPart: part, selectedPlace, highlightParts, ghost: focusMode });
+  }, [data, heat, heatMax, part, selectedPlace?.regionId, selectedPlace?.side, highlightParts, focusMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const down = useRef<{ x: number; y: number } | null>(null);
 
@@ -189,6 +242,9 @@ function LayerMesh({
   };
 
   return (
-    <mesh geometry={data.geometry} material={material} onPointerDown={onPointerDown} onClick={onClick} />
+    <>
+      {focusGeometry && <mesh geometry={focusGeometry} material={solidMaterial} renderOrder={0} raycast={() => null} />}
+      <mesh geometry={data.geometry} material={material} renderOrder={1} onPointerDown={onPointerDown} onClick={onClick} />
+    </>
   );
 }

@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie';
-import type { DailyCheckIn, PainEntry } from './types';
+import type { DailyCheckIn, PainEntry, PlanItem, RemedyLog } from './types';
 
 /**
  * All data lives in the browser's IndexedDB on this device.
@@ -9,11 +9,18 @@ import type { DailyCheckIn, PainEntry } from './types';
 class PaiNoDB extends Dexie {
   entries!: Table<PainEntry, string>;
   checkins!: Table<DailyCheckIn, string>;
+  remedyLogs!: Table<RemedyLog, string>;
+  plan!: Table<PlanItem, string>;
   constructor() {
     super('paino');
     this.version(1).stores({
       entries: 'id, occurredAt, regionId, demo',
       checkins: 'date, demo',
+    });
+    // v2: remedies (Phase 2). Existing data is kept as-is.
+    this.version(2).stores({
+      remedyLogs: 'id, remedyId, doneAt, regionId, demo',
+      plan: 'remedyId, demo',
     });
   }
 }
@@ -58,15 +65,37 @@ export async function allEntries(): Promise<PainEntry[]> {
 }
 
 export async function clearAll() {
-  await db.transaction('rw', db.entries, db.checkins, async () => {
-    await db.entries.clear();
-    await db.checkins.clear();
+  await db.transaction('rw', [db.entries, db.checkins, db.remedyLogs, db.plan], async () => {
+    await Promise.all([db.entries.clear(), db.checkins.clear(), db.remedyLogs.clear(), db.plan.clear()]);
   });
 }
 
 export async function clearDemo() {
   await db.entries.filter((e) => !!e.demo).delete();
   await db.checkins.filter((c) => !!c.demo).delete();
+  await db.remedyLogs.filter((l) => !!l.demo).delete();
+  await db.plan.filter((p) => !!p.demo).delete();
+}
+
+export async function logRemedy(l: Omit<RemedyLog, 'id' | 'tzOffsetMin'>) {
+  const log: RemedyLog = { ...l, id: newId(), tzOffsetMin: -new Date(l.doneAt).getTimezoneOffset() };
+  await db.remedyLogs.put(log);
+  return log;
+}
+
+export async function setRemedyFeeling(id: string, feeling: RemedyLog['feeling']) {
+  await db.remedyLogs.update(id, { feeling });
+}
+
+export async function deleteRemedyLog(id: string) {
+  await db.remedyLogs.delete(id);
+}
+
+export async function togglePlan(item: Omit<PlanItem, 'addedAt'>) {
+  const existing = await db.plan.get(item.remedyId);
+  if (existing) await db.plan.delete(item.remedyId);
+  else await db.plan.put({ ...item, addedAt: new Date().toISOString() });
+  return !existing;
 }
 
 /** Ask the browser not to evict our data when storage runs low. */

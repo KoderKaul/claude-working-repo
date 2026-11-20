@@ -2,10 +2,13 @@ import { lazy, Suspense, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Link } from 'react-router-dom';
 import { addEntry, db } from '../db/db';
-import type { LayerKey } from '../db/types';
+import type { LayerKey, PainEntry } from '../db/types';
+import { flagsForPlace, type RedFlag } from '../lib/redflags';
+import { suggestRemedies, type Suggestion } from '../lib/relief';
+import { FlagList } from '../components/Relief';
 import { LogForm, type LogDraft } from '../components/LogForm';
 import { RegionPicker } from '../components/RegionPicker';
-import { IntensityBadge, useToast } from '../components/ui';
+import { IntensityBadge } from '../components/ui';
 import { EditEntryModal, CheckInModal } from '../components/Modals';
 import { placeLabel } from '../lib/regions';
 import { formatTime, localDate, todayStr } from '../lib/time';
@@ -16,7 +19,6 @@ import { webglAvailable } from '../three/webgl';
 const BodyViewer = lazy(() => import('../three/BodyViewer'));
 
 export default function LogPage() {
-  const toast = useToast();
   const [depth, setDepth] = useState<LayerKey>('skin');
   const [pick, setPick] = useState<Pick | null>(null);
   const [draft, setDraft] = useState<LogDraft | null>(null);
@@ -24,6 +26,7 @@ export default function LogPage() {
   const [listOpen, setListOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [checkInOpen, setCheckInOpen] = useState(false);
+  const [saved, setSaved] = useState<{ entry: PainEntry; flags: RedFlag[]; ideas: Suggestion[] } | null>(null);
   const has3d = useMemo(webglAvailable, []);
 
   const today = todayStr();
@@ -88,11 +91,42 @@ export default function LogPage() {
                   title="Log pain"
                   onCancel={close}
                   onSave={async (d) => {
-                    await addEntry({ ...d });
-                    toast(`Saved · ${placeLabel(d.regionId, d.side)}`);
+                    const entry = await addEntry({ ...d });
+                    const [all, logs, plan] = await Promise.all([db.entries.toArray(), db.remedyLogs.toArray(), db.plan.toArray()]);
                     close();
+                    setSaved({
+                      entry,
+                      flags: flagsForPlace(all, entry.regionId, entry.side),
+                      ideas: suggestRemedies(entry.regionId, entry.side, all, logs, plan).slice(0, 3),
+                    });
                   }}
                 />
+              </div>
+            </>
+          ) : saved ? (
+            <>
+              <div className="sheet-backdrop" onClick={() => setSaved(null)} />
+              <div className="card sheet stack">
+                <div className="row" style={{ flexWrap: 'nowrap' }}>
+                  <IntensityBadge value={saved.entry.intensity} />
+                  <div>
+                    <div className="small muted">Saved ✓</div>
+                    <div className="place-title">{placeLabel(saved.entry.regionId, saved.entry.side)}</div>
+                  </div>
+                </div>
+                <FlagList flags={saved.flags} />
+                {saved.ideas.length > 0 && (
+                  <div>
+                    <h3 style={{ marginBottom: 6 }}>Ideas that may help</h3>
+                    <ul className="idea-list">
+                      {saved.ideas.map((s) => <li key={s.remedy.id}><b>{s.remedy.title}</b> <span className="muted small">· {s.remedy.dose}</span></li>)}
+                    </ul>
+                  </div>
+                )}
+                <div className="row">
+                  <Link className="btn primary" style={{ flex: 1 }} to={`/relief?region=${saved.entry.regionId}&side=${saved.entry.side}`}>See relief ideas</Link>
+                  <button className="btn" onClick={() => setSaved(null)}>Done</button>
+                </div>
               </div>
             </>
           ) : (

@@ -14,6 +14,15 @@ describe('backup', () => {
     expect(b.entries).toEqual([e]);
     expect(b.checkins).toHaveLength(1);
   });
+  it('keeps remedy logs and plan, and still reads older v1 backups', () => {
+    const log = { id: 'r1', remedyId: 'cat-cow', doneAt: '2026-03-02T08:00:00Z', tzOffsetMin: 0, regionId: 8, side: 1 as const, feeling: 'better' as const };
+    const plan = { remedyId: 'cat-cow', regionId: 8, side: 1 as const, addedAt: '' };
+    const b = parseBackup(JSON.stringify(makeBackup([e], [], [log], [plan])));
+    expect(b.remedyLogs).toEqual([log]);
+    expect(b.plan).toEqual([plan]);
+    const v1 = parseBackup(JSON.stringify({ app: 'paino', schemaVersion: 1, entries: [e], checkins: [] }));
+    expect(v1.remedyLogs).toEqual([]);
+  });
   it('rejects other files with a readable message', () => {
     expect(() => parseBackup('hello')).toThrow(/not a PaiNo backup/);
     expect(() => parseBackup('{"foo":1}')).toThrow(/not a PaiNo backup/);

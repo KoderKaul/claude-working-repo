@@ -68,7 +68,24 @@ def keep_only(predicate):
     for o in list(bpy.data.objects):
         if o not in keep_set:
             bpy.data.objects.remove(o, do_unlink=True)
+    fix_names(keep)
     return keep
+
+
+# Labels the source model has the wrong way round. The trapezius's descending (upper)
+# part runs neck -> shoulder and its ascending (lower) part runs up from the mid back;
+# Z-Anatomy's meshes carry each other's names (checked by height).
+SWAPPED = [("Descending part of trapezius muscle", "Ascending part of trapezius muscle")]
+
+
+def fix_names(objs):
+    for a, b in SWAPPED:
+        for side in (".l", ".r", ""):
+            oa = next((o for o in objs if o.name == a + side), None)
+            ob = next((o for o in objs if o.name == b + side), None)
+            if oa and ob:
+                oa.name, ob.name = "__tmp__", a + side
+                oa.name = b + side
 
 
 def decimate(objs, ratio, min_faces=60):
@@ -223,7 +240,7 @@ INTERNAL_HEAD = re.compile(
     r"orbicularis oculi|Bucinator|Epicranial|Temporoparietalis",
     re.I,
 )
-MUSCLE_WRAPPERS = re.compile(r"fascia(?! latae)|septum|sheath|retinac|Linea alba|Investing|Iliopectineal arch|"
+MUSCLE_WRAPPERS = re.compile(r"\bfascia\b|septum|sheath|retinac|Linea alba|Investing|Iliopectineal arch|"
                              r"Tendinous arch|Superficial transverse meta|Palmar aponeurosis|Inguinal ligament", re.I)
 KEEP_FASCIA = {"Plantar aponeurosis", "Iliotibial tract"}
 BURSA = re.compile(r"bursa", re.I)

@@ -39,4 +39,28 @@ export interface DailyCheckIn {
   demo?: boolean;
 }
 
-export const SCHEMA_VERSION = 1;
+/** One time the person did a remedy. */
+export interface RemedyLog {
+  id: string;
+  remedyId: string;
+  doneAt: string;
+  tzOffsetMin: number;
+  /** The body place it was done for. */
+  regionId: number;
+  side: Side;
+  /** How it felt straight after. */
+  feeling?: 'better' | 'same' | 'worse';
+  notes?: string;
+  demo?: boolean;
+}
+
+/** A remedy the person has added to their plan. */
+export interface PlanItem {
+  remedyId: string;
+  regionId: number;
+  side: Side;
+  addedAt: string;
+  demo?: boolean;
+}
+
+export const SCHEMA_VERSION = 2;

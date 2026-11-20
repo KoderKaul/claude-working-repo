@@ -12,7 +12,15 @@ Track where and when your body hurts, on a 3D anatomy model, so patterns show up
 - Data stays on your device (IndexedDB). Backup/restore (JSON) and CSV export. Sample data to explore.
 - Installable on a phone (PWA), works offline, light & dark mode.
 
-**Later phases**: remedies (stretches, habits, red-flag warnings, "did it help?"), AI cause explainer.
+**Phase 2 — Relief**
+- Library of ~50 gentle self-care remedies (stretches, strengthening, habits, quick relief) for every body area,
+  each with steps, dose and cautions (`src/data/remedies.ts`)
+- Open a remedy to see the muscles it works lit up on the 3D body (see-through focus mode)
+- Suggestions ranked for each trouble spot using what you were doing and how the pain feels
+- "See a doctor" warnings (`src/lib/redflags.ts`) shown right after logging and on the Relief page
+- "I did this" + "how does it feel now?", a personal plan, and "Is it working?" (pain before vs. since starting)
+
+**Later**: AI cause explainer.
 
 ## Develop
 

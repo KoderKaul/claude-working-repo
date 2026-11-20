@@ -11,12 +11,7 @@ THREE.BufferGeometry.prototype.computeBoundsTree = computeBoundsTree;
 THREE.BufferGeometry.prototype.disposeBoundsTree = disposeBoundsTree;
 THREE.Mesh.prototype.raycast = acceleratedRaycast;
 
-declare module 'three' {
-  interface BufferGeometry {
-    computeBoundsTree: typeof computeBoundsTree;
-    disposeBoundsTree: typeof disposeBoundsTree;
-  }
-}
+// (three-mesh-bvh ships its own type declarations for these methods)
 
 /**
  * One anatomy layer, merged into a single mesh (one draw call, phone friendly).
@@ -195,6 +190,29 @@ export interface PaintOptions {
   heatMax?: number;
   selectedPart?: number | null;
   selectedPlace?: { regionId: number; side: Side } | null;
+  /** Parts to light up, e.g. the muscles a stretch works. */
+  highlightParts?: Set<number> | null;
+  /** Focus mode: fade everything that isn't highlighted to a pale grey. */
+  ghost?: boolean;
+}
+
+const HIGHLIGHT = new THREE.Color('#13a06c');
+const GHOST = new THREE.Color('#c9c4bc');
+
+/**
+ * Parts whose name contains any of `names` (case-insensitive), on the given side
+ * (0 = both sides).
+ */
+export function findParts(layer: LayerData, names: string[], side: Side): Set<number> {
+  const wanted = names.map((n) => n.toLowerCase());
+  const out = new Set<number>();
+  layer.partNames.forEach((full, i) => {
+    const s = /\.l$/.test(full) ? 1 : /\.r$/.test(full) ? 2 : 0;
+    if (side !== 0 && s !== 0 && s !== side) return;
+    const n = full.toLowerCase();
+    if (wanted.some((w) => n.includes(w))) out.add(i);
+  });
+  return out;
 }
 
 export function paint(layer: LayerData, o: PaintOptions) {
@@ -227,6 +245,9 @@ export function paint(layer: LayerData, o: PaintOptions) {
       && (o.selectedPlace.side === 0 || layer.sideOfVertex[i] === o.selectedPlace.side)) {
       c.lerp(SELECT_SOFT, 0.55);
     }
+    const lit = o.highlightParts?.has(layer.partOfVertex[i]);
+    if (lit) c.lerp(HIGHLIGHT, 0.9);
+    else if (o.ghost) c.lerp(GHOST, 0.75);
     if (o.selectedPart != null && layer.partOfVertex[i] === o.selectedPart && layer.key !== 'skin') c.lerp(SELECT, 0.85);
     out[i * 3] = c.r;
     out[i * 3 + 1] = c.g;

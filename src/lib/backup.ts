@@ -1,4 +1,4 @@
-import type { DailyCheckIn, PainEntry } from '../db/types';
+import type { DailyCheckIn, PainEntry, PlanItem, RemedyLog } from '../db/types';
 import { SCHEMA_VERSION } from '../db/types';
 import { regionLabel, SIDE_LABEL } from './regions';
 import { structureLabel } from './anatomy';
@@ -9,10 +9,12 @@ export interface Backup {
   exportedAt: string;
   entries: PainEntry[];
   checkins: DailyCheckIn[];
+  remedyLogs: RemedyLog[];
+  plan: PlanItem[];
 }
 
-export function makeBackup(entries: PainEntry[], checkins: DailyCheckIn[]): Backup {
-  return { app: 'paino', schemaVersion: SCHEMA_VERSION, exportedAt: new Date().toISOString(), entries, checkins };
+export function makeBackup(entries: PainEntry[], checkins: DailyCheckIn[], remedyLogs: RemedyLog[] = [], plan: PlanItem[] = []): Backup {
+  return { app: 'paino', schemaVersion: SCHEMA_VERSION, exportedAt: new Date().toISOString(), entries, checkins, remedyLogs, plan };
 }
 
 /** Validates an uploaded backup file. Throws a readable error if it isn't one. */
@@ -33,7 +35,12 @@ export function parseBackup(text: string): Backup {
   const checkins = (Array.isArray(b.checkins) ? b.checkins : []).filter(
     (c): c is DailyCheckIn => !!c && typeof c.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(c.date),
   );
-  return { app: 'paino', schemaVersion: SCHEMA_VERSION, exportedAt: b.exportedAt ?? '', entries, checkins };
+  // remedy data arrived in schema v2; v1 backups simply have none
+  const remedyLogs = (Array.isArray(b.remedyLogs) ? b.remedyLogs : []).filter(
+    (l): l is RemedyLog => !!l && typeof l.id === 'string' && typeof l.remedyId === 'string' && typeof l.doneAt === 'string',
+  );
+  const plan = (Array.isArray(b.plan) ? b.plan : []).filter((p): p is PlanItem => !!p && typeof p.remedyId === 'string');
+  return { app: 'paino', schemaVersion: SCHEMA_VERSION, exportedAt: b.exportedAt ?? '', entries, checkins, remedyLogs, plan };
 }
 
 const csvCell = (v: unknown) => {

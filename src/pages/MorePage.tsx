@@ -12,7 +12,7 @@ export default function MorePage() {
   const [busy, setBusy] = useState(false);
   const counts = useLiveQuery(async () => ({
     entries: await db.entries.count(),
-    demo: await db.entries.filter((e) => !!e.demo).count(),
+    demo: (await db.entries.filter((e) => !!e.demo).count()) + (await db.remedyLogs.filter((l) => !!l.demo).count()),
     checkins: await db.checkins.count(),
   }), []);
   const [theme, setTheme] = useState(() => {
@@ -27,7 +27,7 @@ export default function MorePage() {
   }
 
   async function exportJson() {
-    const b = makeBackup(await db.entries.toArray(), await db.checkins.toArray());
+    const b = makeBackup(await db.entries.toArray(), await db.checkins.toArray(), await db.remedyLogs.toArray(), await db.plan.toArray());
     downloadFile(`paino-backup-${todayStr()}.json`, JSON.stringify(b, null, 2), 'application/json');
   }
   async function exportCsv() {
@@ -36,11 +36,13 @@ export default function MorePage() {
   async function importFile(f: File) {
     try {
       const b = parseBackup(await f.text());
-      await db.transaction('rw', db.entries, db.checkins, async () => {
+      await db.transaction('rw', [db.entries, db.checkins, db.remedyLogs, db.plan], async () => {
         await db.entries.bulkPut(b.entries);
         await db.checkins.bulkPut(b.checkins);
+        await db.remedyLogs.bulkPut(b.remedyLogs);
+        await db.plan.bulkPut(b.plan);
       });
-      toast(`Imported ${b.entries.length} entries and ${b.checkins.length} check-ins`);
+      toast(`Imported ${b.entries.length} entries, ${b.checkins.length} check-ins and ${b.remedyLogs.length} remedy sessions`);
     } catch (e) {
       toast((e as Error).message);
     }

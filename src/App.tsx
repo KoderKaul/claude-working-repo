@@ -7,11 +7,13 @@ import HistoryPage from './pages/HistoryPage';
 import MorePage from './pages/MorePage';
 
 const InsightsPage = lazy(() => import('./pages/InsightsPage'));
+const ReliefPage = lazy(() => import('./pages/ReliefPage'));
 
 const NAV = [
   { to: '/', label: 'Log', icon: 'log', end: true },
   { to: '/history', label: 'History', icon: 'history' },
   { to: '/insights', label: 'Insights', icon: 'insights' },
+  { to: '/relief', label: 'Relief', icon: 'relief' },
   { to: '/more', label: 'More', icon: 'more' },
 ];
 
@@ -40,6 +42,7 @@ export default function App() {
                 <Route path="/" element={<LogPage />} />
                 <Route path="/history" element={<HistoryPage />} />
                 <Route path="/insights" element={<InsightsPage />} />
+                <Route path="/relief" element={<ReliefPage />} />
                 <Route path="/more" element={<MorePage />} />
                 <Route path="*" element={<LogPage />} />
               </Routes>

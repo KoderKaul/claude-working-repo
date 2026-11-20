@@ -1,6 +1,6 @@
 export const PAIN_TYPES = [
   'Sharp', 'Dull ache', 'Burning', 'Throbbing', 'Stabbing', 'Shooting',
-  'Tingling', 'Numbness', 'Stiffness', 'Cramping', 'Tender to touch', 'Weakness',
+  'Tingling', 'Numbness', 'Stiffness', 'Cramping', 'Tender to touch', 'Swelling', 'Weakness',
 ];
 
 export const ACTIVITIES = [
